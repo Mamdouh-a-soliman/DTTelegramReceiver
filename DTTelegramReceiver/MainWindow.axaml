@@ -1,0 +1,330 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="DTTelegramReceiver.MainWindow"
+        Title="DaneTrades Signal Backtester v3.0" 
+        Background="#0D1117"
+        Width="1400" Height="900"
+        MinWidth="1200" MinHeight="700"
+        Icon="avares://DTTelegramReceiver/Assets/DaneTrades_Logo.ico"> 
+
+	<Window.Styles>
+		<!-- Modern Dark Theme Styles -->
+		<Style Selector="TextBlock">
+			<Setter Property="Foreground" Value="#E6EDF3"/>
+			<Setter Property="FontSize" Value="12"/>
+			<Setter Property="FontFamily" Value="Segoe UI"/>
+		</Style>
+		
+		<Style Selector="TextBox">
+			<Setter Property="Background" Value="#21262D"/>
+			<Setter Property="BorderBrush" Value="#30363D"/>
+			<Setter Property="Foreground" Value="#E6EDF3"/>
+			<Setter Property="FontSize" Value="12"/>
+			<Setter Property="CornerRadius" Value="6"/>
+			<Setter Property="Padding" Value="8"/>
+			<Setter Property="BorderThickness" Value="1"/>
+		</Style>
+		
+		<Style Selector="Button">
+			<Setter Property="Background" Value="#238636"/>
+			<Setter Property="Foreground" Value="White"/>
+			<Setter Property="BorderThickness" Value="0"/>
+			<Setter Property="CornerRadius" Value="6"/>
+			<Setter Property="Padding" Value="12,8"/>
+			<Setter Property="FontSize" Value="12"/>
+			<Setter Property="FontWeight" Value="Medium"/>
+		</Style>
+		
+		<Style Selector="Button:pointerover">
+			<Setter Property="Background" Value="#2EA043"/>
+		</Style>
+		
+		<Style Selector="Button.secondary">
+			<Setter Property="Background" Value="#21262D"/>
+			<Setter Property="BorderBrush" Value="#30363D"/>
+			<Setter Property="BorderThickness" Value="1"/>
+		</Style>
+		
+		<Style Selector="Button.secondary:pointerover">
+			<Setter Property="Background" Value="#30363D"/>
+		</Style>
+		
+		<Style Selector="ComboBox">
+			<Setter Property="Background" Value="#21262D"/>
+			<Setter Property="BorderBrush" Value="#30363D"/>
+			<Setter Property="Foreground" Value="#E6EDF3"/>
+			<Setter Property="CornerRadius" Value="6"/>
+			<Setter Property="Padding" Value="8"/>
+		</Style>
+		
+		<Style Selector="DatePicker">
+			<Setter Property="Background" Value="#21262D"/>
+			<Setter Property="BorderBrush" Value="#30363D"/>
+			<Setter Property="Foreground" Value="#E6EDF3"/>
+			<Setter Property="CornerRadius" Value="6"/>
+		</Style>
+	</Window.Styles>
+
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto"/> <!-- Header -->
+			<RowDefinition Height="*"/>    <!-- Main Content -->
+			<RowDefinition Height="Auto"/> <!-- Status Bar -->
+		</Grid.RowDefinitions>
+
+		<!-- Header -->
+		<Border Grid.Row="0" Background="#161B22" BorderBrush="#30363D" BorderThickness="0,0,0,1" Padding="20,15">
+			<Grid>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="Auto"/>
+					<ColumnDefinition Width="*"/>
+					<ColumnDefinition Width="Auto"/>
+				</Grid.ColumnDefinitions>
+				
+				<StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="15">
+					<TextBlock Text="📈" FontSize="24" VerticalAlignment="Center"/>
+					<TextBlock Text="Signal Backtester" FontSize="18" FontWeight="Bold" VerticalAlignment="Center"/>
+				</StackPanel>
+				
+				<StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10">
+					<TextBlock x:Name="tb_telegramStatus" Text="Telegram: Ready" Foreground="#7D8590" VerticalAlignment="Center"/>
+					<Button x:Name="bt_connectTelegram" Content="Connect" Classes="secondary"/>
+				</StackPanel>
+			</Grid>
+		</Border>
+
+		<!-- Main Content -->
+		<Grid Grid.Row="1" Margin="20">
+			<Grid.RowDefinitions>
+				<RowDefinition Height="Auto"/> <!-- Controls -->
+				<RowDefinition Height="*"/>    <!-- Chart and Results -->
+			</Grid.RowDefinitions>
+
+			<!-- Controls Panel -->
+			<Border Grid.Row="0" Background="#161B22" CornerRadius="8" Padding="20" Margin="0,0,0,20">
+				<Grid>
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="Auto"/>
+						<ColumnDefinition Width="Auto"/>
+						<ColumnDefinition Width="Auto"/>
+						<ColumnDefinition Width="Auto"/>
+						<ColumnDefinition Width="*"/>
+						<ColumnDefinition Width="Auto"/>
+					</Grid.ColumnDefinitions>
+					
+					<StackPanel Grid.Column="0" Spacing="5" Margin="0,0,20,0">
+						<TextBlock Text="From Date" FontSize="11" Foreground="#7D8590"/>
+						<DatePicker x:Name="dp_fromDate"/>
+					</StackPanel>
+					
+					<StackPanel Grid.Column="1" Spacing="5" Margin="0,0,20,0">
+						<TextBlock Text="To Date" FontSize="11" Foreground="#7D8590"/>
+						<DatePicker x:Name="dp_toDate"/>
+					</StackPanel>
+					
+					<StackPanel Grid.Column="2" Spacing="5" Margin="0,0,20,0">
+						<TextBlock Text="Symbol" FontSize="11" Foreground="#7D8590"/>
+						<ComboBox x:Name="cb_symbol" Width="120">
+							<ComboBoxItem Content="All Symbols" IsSelected="True"/>
+							<ComboBoxItem Content="XAUUSD"/>
+							<ComboBoxItem Content="EURUSD"/>
+							<ComboBoxItem Content="GBPUSD"/>
+							<ComboBoxItem Content="USDJPY"/>
+							<ComboBoxItem Content="BTCUSD"/>
+						</ComboBox>
+					</StackPanel>
+					
+					<StackPanel Grid.Column="3" Spacing="5" Margin="0,0,20,0">
+						<TextBlock Text="Channel" FontSize="11" Foreground="#7D8590"/>
+						<ComboBox x:Name="cb_channel" Width="150">
+							<ComboBoxItem Content="All Channels" IsSelected="True"/>
+						</ComboBox>
+					</StackPanel>
+					
+					<StackPanel Grid.Column="5" Orientation="Horizontal" Spacing="10" VerticalAlignment="Bottom">
+						<Button x:Name="bt_loadMessages" Content="Load Messages"/>
+						<Button x:Name="bt_runBacktest" Content="Run Backtest" IsEnabled="False"/>
+						<Button x:Name="bt_exportMQL5" Content="Export MQL5" Classes="secondary" IsEnabled="False"/>
+					</StackPanel>
+				</Grid>
+			</Border>
+
+			<!-- Chart and Results -->
+			<Grid Grid.Row="1">
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="*"/>   <!-- Messages -->
+					<ColumnDefinition Width="*"/>   <!-- Chart -->
+					<ColumnDefinition Width="*"/>   <!-- Results -->
+				</Grid.ColumnDefinitions>
+
+				<!-- Messages Panel -->
+				<Border Grid.Column="0" Background="#161B22" CornerRadius="8" Margin="0,0,10,0">
+					<Grid>
+						<Grid.RowDefinitions>
+							<RowDefinition Height="Auto"/>
+							<RowDefinition Height="*"/>
+							<RowDefinition Height="Auto"/>
+						</Grid.RowDefinitions>
+						
+						<TextBlock Grid.Row="0" Text="Loaded Messages" FontSize="14" FontWeight="Medium" Margin="20,15,20,10"/>
+						
+						<!-- Messages List -->
+						<ScrollViewer Grid.Row="1" Margin="20,0,20,10">
+							<ListBox x:Name="lb_messages" Background="Transparent" BorderThickness="0">
+								<!-- Messages will be added here -->
+							</ListBox>
+						</ScrollViewer>
+						
+						<!-- Messages placeholder -->
+						<StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center" x:Name="sp_messagesPlaceholder">
+							<TextBlock Text="💬" FontSize="48" HorizontalAlignment="Center" Opacity="0.3"/>
+							<TextBlock Text="Click Load Messages to see content" FontSize="14" Foreground="#7D8590" HorizontalAlignment="Center"/>
+						</StackPanel>
+						
+						<!-- Message count -->
+						<TextBlock Grid.Row="2" x:Name="tb_messageCount" Text="0 messages loaded" FontSize="11" Foreground="#7D8590" Margin="20,0,20,15" HorizontalAlignment="Center"/>
+					</Grid>
+				</Border>
+
+				<!-- Chart Panel -->
+				<Border Grid.Column="1" Background="#161B22" CornerRadius="8" Margin="5,0">
+					<Grid>
+						<Grid.RowDefinitions>
+							<RowDefinition Height="Auto"/>
+							<RowDefinition Height="*"/>
+						</Grid.RowDefinitions>
+						
+						<TextBlock Grid.Row="0" Text="Price Chart &amp; Signals" FontSize="14" FontWeight="Medium" Margin="20,15,20,10"/>
+						
+						<!-- Chart placeholder -->
+						<Border Grid.Row="1" Margin="20" Background="#0D1117" CornerRadius="6" BorderBrush="#30363D" BorderThickness="1">
+							<StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" x:Name="sp_chartPlaceholder">
+								<TextBlock Text="📈" FontSize="48" HorizontalAlignment="Center" Opacity="0.3"/>
+								<TextBlock Text="Run backtest to see chart" FontSize="14" Foreground="#7D8590" HorizontalAlignment="Center"/>
+							</StackPanel>
+						</Border>
+					</Grid>
+				</Border>
+
+				<!-- Results Panel -->
+				<Border Grid.Column="2" Background="#161B22" CornerRadius="8" Margin="10,0,0,0">
+					<Grid>
+						<Grid.RowDefinitions>
+							<RowDefinition Height="Auto"/>
+							<RowDefinition Height="Auto"/>
+							<RowDefinition Height="*"/>
+						</Grid.RowDefinitions>
+						
+						<!-- Stats Header -->
+						<TextBlock Grid.Row="0" Text="Backtest Results" FontSize="14" FontWeight="Medium" Margin="20,15,20,10"/>
+						
+						<!-- Key Stats -->
+						<StackPanel Grid.Row="1" Margin="20,0,20,20" Spacing="15" x:Name="sp_stats">
+							<Grid>
+								<Grid.ColumnDefinitions>
+									<ColumnDefinition Width="*"/>
+									<ColumnDefinition Width="Auto"/>
+								</Grid.ColumnDefinitions>
+								<TextBlock Text="Total Trades" Foreground="#7D8590"/>
+								<TextBlock x:Name="tb_totalTrades" Text="0" Grid.Column="1" FontWeight="Medium"/>
+							</Grid>
+							
+							<Grid>
+								<Grid.ColumnDefinitions>
+									<ColumnDefinition Width="*"/>
+									<ColumnDefinition Width="Auto"/>
+								</Grid.ColumnDefinitions>
+								<TextBlock Text="Win Rate" Foreground="#7D8590"/>
+								<TextBlock x:Name="tb_winRate" Text="0%" Grid.Column="1" FontWeight="Medium"/>
+							</Grid>
+							
+							<Grid>
+								<Grid.ColumnDefinitions>
+									<ColumnDefinition Width="*"/>
+									<ColumnDefinition Width="Auto"/>
+								</Grid.ColumnDefinitions>
+								<TextBlock Text="Total P&amp;L" Foreground="#7D8590"/>
+								<TextBlock x:Name="tb_totalPnL" Text="$0" Grid.Column="1" FontWeight="Medium"/>
+							</Grid>
+							
+							<Grid>
+								<Grid.ColumnDefinitions>
+									<ColumnDefinition Width="*"/>
+									<ColumnDefinition Width="Auto"/>
+								</Grid.ColumnDefinitions>
+								<TextBlock Text="Max Drawdown" Foreground="#7D8590"/>
+								<TextBlock x:Name="tb_maxDrawdown" Text="0%" Grid.Column="1" FontWeight="Medium"/>
+							</Grid>
+						</StackPanel>
+						
+						<!-- Trade List -->
+						<ScrollViewer Grid.Row="2" Margin="20,0,20,20">
+							<ListBox x:Name="lb_trades" Background="Transparent" BorderThickness="0">
+								<!-- Trade items will be added here -->
+							</ListBox>
+						</ScrollViewer>
+						
+						<!-- Placeholder when no results -->
+						<StackPanel Grid.Row="2" VerticalAlignment="Center" HorizontalAlignment="Center" x:Name="sp_resultsPlaceholder">
+							<TextBlock Text="📊" FontSize="48" HorizontalAlignment="Center" Opacity="0.3"/>
+							<TextBlock Text="Run backtest to see results" FontSize="14" Foreground="#7D8590" HorizontalAlignment="Center"/>
+						</StackPanel>
+					</Grid>
+				</Border>
+			</Grid>
+		</Grid>
+
+		<!-- Status Bar -->
+		<Border Grid.Row="2" Background="#161B22" BorderBrush="#30363D" BorderThickness="0,1,0,0" Padding="20,10">
+			<Grid>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="*"/>
+					<ColumnDefinition Width="Auto"/>
+				</Grid.ColumnDefinitions>
+				
+				<TextBlock x:Name="tb_statusMessage" Text="Ready - Select date range and click Load Messages" Foreground="#7D8590"/>
+				
+				<StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="15">
+					<Button x:Name="bt_help" Content="Help" Classes="secondary" FontSize="11" Padding="8,4"/>
+					<Button x:Name="bt_more" Content="More Products" Classes="secondary" FontSize="11" Padding="8,4"/>
+				</StackPanel>
+			</Grid>
+		</Border>
+
+		<!-- Telegram Login Dialog Overlay -->
+		<Border x:Name="loginOverlay" Grid.RowSpan="3" Background="#80000000" IsVisible="False">
+			<Border Background="#161B22" CornerRadius="8" Width="400" Height="300" HorizontalAlignment="Center" VerticalAlignment="Center">
+				<StackPanel Margin="30" Spacing="15">
+					<TextBlock Text="📱 Telegram Login" FontSize="18" FontWeight="Bold" HorizontalAlignment="Center"/>
+					
+					<!-- Phone Number Step -->
+					<StackPanel x:Name="phoneStep" Spacing="10">
+						<TextBlock Text="Enter your phone number:" FontSize="12"/>
+						<TextBox x:Name="tb_phoneNumber" Watermark="+1234567890" FontSize="12"/>
+						<Button x:Name="bt_submitPhone" Content="Send Code" HorizontalAlignment="Center" Width="120"/>
+					</StackPanel>
+					
+					<!-- Verification Code Step -->
+					<StackPanel x:Name="codeStep" Spacing="10" IsVisible="False">
+						<TextBlock Text="Enter verification code:" FontSize="12"/>
+						<TextBox x:Name="tb_verificationCode" Watermark="12345" FontSize="12"/>
+						<Button x:Name="bt_submitCode" Content="Verify Code" HorizontalAlignment="Center" Width="120"/>
+					</StackPanel>
+					
+					<!-- Password Step -->
+					<StackPanel x:Name="passwordStep" Spacing="10" IsVisible="False">
+						<TextBlock Text="Enter 2FA password:" FontSize="12"/>
+						<TextBox x:Name="tb_password" PasswordChar="*" FontSize="12"/>
+						<Button x:Name="bt_submitPassword" Content="Login" HorizontalAlignment="Center" Width="120"/>
+					</StackPanel>
+					
+					<!-- Status -->
+					<TextBlock x:Name="tb_loginStatus" Text="" FontSize="11" Foreground="#7D8590" HorizontalAlignment="Center"/>
+					
+					<!-- Close Button -->
+					<Button x:Name="bt_closeLogin" Content="Cancel" Classes="secondary" HorizontalAlignment="Center" Width="80"/>
+				</StackPanel>
+			</Border>
+		</Border>
+	</Grid>
+</Window>

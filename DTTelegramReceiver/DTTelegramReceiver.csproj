@@ -1,0 +1,70 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <ApplicationIcon>Assets/DaneTrades_Logo.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Remove="Assets\Channels.png" />
+    <None Remove="Assets\connection.png" />
+    <None Remove="Assets\DaneTrades_Logo.ico" />
+    <None Remove="Assets\Filter.png" />
+    <None Remove="Assets\General.png" />
+    <None Remove="Assets\License.png" />
+    <None Remove="Assets\Loading_bar.gif" />
+    <None Remove="Assets\Loading_sphere.gif" />
+    <None Remove="Assets\loading_spinner.gif" />
+    <None Remove="Assets\Logs.png" />
+    <None Remove="Assets\MTtoMTLogo.png" />
+    <None Remove="Assets\Symbol.png" />
+    <None Remove="Assets\Time.png" />
+    <None Remove="Assets\TLReceiverLogo.png" />
+    <None Remove="Assets\TLtoTLLogo.png" />
+    <None Remove="Assets\TLtoTLLogo2.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <AvaloniaResource Include="Assets\Channels.png" />
+    <AvaloniaResource Include="Assets\connection.png" />
+    <AvaloniaResource Include="Assets\DaneTrades_Logo.ico" />
+    <AvaloniaResource Include="Assets\Filter.png" />
+    <AvaloniaResource Include="Assets\General.png" />
+    <AvaloniaResource Include="Assets\License.png" />
+    <AvaloniaResource Include="Assets\Loading_bar.gif" />
+    <AvaloniaResource Include="Assets\Loading_sphere.gif" />
+    <AvaloniaResource Include="Assets\loading_spinner.gif" />
+    <AvaloniaResource Include="Assets\Logs.png" />
+    <AvaloniaResource Include="Assets\MTtoMTLogo.png" />
+    <AvaloniaResource Include="Assets\Symbol.png" />
+    <AvaloniaResource Include="Assets\Time.png" />
+    <AvaloniaResource Include="Assets\TLReceiverLogo.png" />
+    <AvaloniaResource Include="Assets\TLtoTLLogo.png" />
+    <AvaloniaResource Include="Assets\TLtoTLLogo2.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.1.0" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.1.0" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.1.0" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.1.0" />
+    <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
+    <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.1.0" />
+    <PackageReference Include="Avalonia_Gif" Version="1.0.0" />
+    <PackageReference Include="Costura.Fody" Version="6.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Fody" Version="6.9.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="Unidecode.NET" Version="2.1.0" />
+    <PackageReference Include="WTelegramClient" Version="4.3.2" />
+    <PackageReference Include="OxyPlot.Avalonia" Version="2.1.0" />
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+  </ItemGroup>
+</Project>

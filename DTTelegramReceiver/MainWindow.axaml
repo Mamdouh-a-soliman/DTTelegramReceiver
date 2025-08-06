@@ -1,5 +1,6 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:oxy="http://oxyplot.org/avalonia"
         x:Class="DTTelegramReceiver.MainWindow"
         Title="DaneTrades Signal Backtester v3.0" 
         Background="#0D1117"
@@ -196,12 +197,18 @@
 						
 						<TextBlock Grid.Row="0" Text="Price Chart &amp; Signals" FontSize="14" FontWeight="Medium" Margin="20,15,20,10"/>
 						
-						<!-- Chart placeholder -->
+						<!-- Chart Area -->
 						<Border Grid.Row="1" Margin="20" Background="#0D1117" CornerRadius="6" BorderBrush="#30363D" BorderThickness="1">
-							<StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" x:Name="sp_chartPlaceholder">
-								<TextBlock Text="📈" FontSize="48" HorizontalAlignment="Center" Opacity="0.3"/>
-								<TextBlock Text="Run backtest to see chart" FontSize="14" Foreground="#7D8590" HorizontalAlignment="Center"/>
-							</StackPanel>
+							<Grid>
+								<!-- Chart placeholder (shown initially) -->
+								<StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" x:Name="sp_chartPlaceholder">
+									<TextBlock Text="📈" FontSize="48" HorizontalAlignment="Center" Opacity="0.3"/>
+									<TextBlock Text="Run backtest to see chart" FontSize="14" Foreground="#7D8590" HorizontalAlignment="Center"/>
+								</StackPanel>
+								
+								<!-- Actual chart (shown after backtest) -->
+								<oxy:PlotView x:Name="chartView" Background="Transparent" IsVisible="False"/>
+							</Grid>
 						</Border>
 					</Grid>
 				</Border>

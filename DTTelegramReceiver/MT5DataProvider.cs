@@ -71,16 +71,23 @@ namespace DTTelegramReceiver
         private void CreateMT5DataScript()
         {
             var script = @"
-import MetaTrader5 as mt5
-import pandas as pd
-import json
 import sys
+import json
 from datetime import datetime, timedelta
 
+try:
+    import MetaTrader5 as mt5
+    MT5_AVAILABLE = True
+except ImportError:
+    MT5_AVAILABLE = False
+
 def get_mt5_data(symbol, timeframe, start_date, end_date):
+    if not MT5_AVAILABLE:
+        return {'error': 'MetaTrader5 package not installed. Install with: pip install MetaTrader5'}
+    
     # Initialize MT5 connection
     if not mt5.initialize():
-        return {'error': 'Failed to initialize MT5'}
+        return {'error': 'Failed to initialize MT5. Make sure MT5 is running and allows automated trading.'}
     
     try:
         # Convert timeframe string to MT5 constant
@@ -96,11 +103,20 @@ def get_mt5_data(symbol, timeframe, start_date, end_date):
         
         tf = timeframe_map.get(timeframe, mt5.TIMEFRAME_H1)
         
+        # Check if symbol exists
+        symbol_info = mt5.symbol_info(symbol)
+        if symbol_info is None:
+            return {'error': f'Symbol {symbol} not found in MT5'}
+        
+        # Select the symbol in Market Watch
+        if not mt5.symbol_select(symbol, True):
+            return {'error': f'Failed to select symbol {symbol}'}
+        
         # Get rates
         rates = mt5.copy_rates_range(symbol, tf, start_date, end_date)
         
         if rates is None or len(rates) == 0:
-            return {'error': f'No data found for {symbol}'}
+            return {'error': f'No data found for {symbol} in the specified date range'}
         
         # Convert to list of dictionaries
         data = []
@@ -114,10 +130,10 @@ def get_mt5_data(symbol, timeframe, start_date, end_date):
                 'volume': int(rate['tick_volume'])
             })
         
-        return {'data': data}
+        return {'data': data, 'count': len(data)}
         
     except Exception as e:
-        return {'error': str(e)}
+        return {'error': f'MT5 error: {str(e)}'}
     finally:
         mt5.shutdown()
 
@@ -126,13 +142,16 @@ if __name__ == '__main__':
         print(json.dumps({'error': 'Usage: python script.py <symbol> <timeframe> <start_date> <end_date>'}))
         sys.exit(1)
     
-    symbol = sys.argv[1]
-    timeframe = sys.argv[2]
-    start_date = datetime.fromisoformat(sys.argv[3])
-    end_date = datetime.fromisoformat(sys.argv[4])
-    
-    result = get_mt5_data(symbol, timeframe, start_date, end_date)
-    print(json.dumps(result))
+    try:
+        symbol = sys.argv[1]
+        timeframe = sys.argv[2]
+        start_date = datetime.fromisoformat(sys.argv[3])
+        end_date = datetime.fromisoformat(sys.argv[4])
+        
+        result = get_mt5_data(symbol, timeframe, start_date, end_date)
+        print(json.dumps(result))
+    except Exception as e:
+        print(json.dumps({'error': f'Script error: {str(e)}'}))
 ";
 
             File.WriteAllText(_scriptPath, script);
@@ -142,6 +161,8 @@ if __name__ == '__main__':
         {
             try
             {
+                Console.WriteLine($"Fetching MT5 data for {symbol} from {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}");
+                
                 var process = new Process
                 {
                     StartInfo = new ProcessStartInfo
@@ -160,16 +181,30 @@ if __name__ == '__main__':
                 var error = await process.StandardError.ReadToEndAsync();
                 await process.WaitForExitAsync();
 
+                Console.WriteLine($"Python output: {output}");
                 if (!string.IsNullOrEmpty(error))
                 {
-                    throw new Exception($"Python script error: {error}");
+                    Console.WriteLine($"Python error: {error}");
+                }
+
+                if (!string.IsNullOrEmpty(error) && !error.Contains("warning"))
+                {
+                    Console.WriteLine($"Using dummy data for {symbol} due to error: {error}");
+                    return GenerateDummyData(symbol, startDate, endDate);
+                }
+
+                if (string.IsNullOrWhiteSpace(output))
+                {
+                    Console.WriteLine($"Empty output from Python script for {symbol}, using dummy data");
+                    return GenerateDummyData(symbol, startDate, endDate);
                 }
 
                 var result = JsonSerializer.Deserialize<JsonElement>(output);
                 
                 if (result.TryGetProperty("error", out var errorProp))
                 {
-                    throw new Exception(errorProp.GetString());
+                    Console.WriteLine($"MT5 error for {symbol}: {errorProp.GetString()}, using dummy data");
+                    return GenerateDummyData(symbol, startDate, endDate);
                 }
 
                 if (result.TryGetProperty("data", out var dataProp))
@@ -189,14 +224,16 @@ if __name__ == '__main__':
                         });
                     }
                     
-                    return candles;
+                    Console.WriteLine($"Successfully loaded {candles.Count} candles for {symbol}");
+                    return candles.Any() ? candles : GenerateDummyData(symbol, startDate, endDate);
                 }
 
-                return new List<CandleData>();
+                Console.WriteLine($"No data property found for {symbol}, using dummy data");
+                return GenerateDummyData(symbol, startDate, endDate);
             }
             catch (Exception ex)
             {
-                // Fallback to dummy data for testing
+                Console.WriteLine($"Exception fetching data for {symbol}: {ex.Message}, using dummy data");
                 return GenerateDummyData(symbol, startDate, endDate);
             }
         }

@@ -10,6 +10,10 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using WTelegram;
 using TL;
+using OxyPlot;
+using OxyPlot.Series;
+using OxyPlot.Axes;
+using OxyPlot.Annotations;
 
 namespace DTTelegramReceiver
 {
@@ -948,8 +952,7 @@ namespace DTTelegramReceiver
                 
                 bt_exportMQL5.IsEnabled = true;
 
-                // Show chart placeholder with symbol info
-                sp_chartPlaceholder.IsVisible = false;
+                // Show results and chart
                 sp_resultsPlaceholder.IsVisible = false;
                 sp_stats.IsVisible = true;
             }
@@ -1006,10 +1009,165 @@ namespace DTTelegramReceiver
                 // Show results, hide placeholder
                 sp_stats.IsVisible = true;
                 sp_resultsPlaceholder.IsVisible = false;
+
+                // Update chart
+                UpdateChart(result);
             }
             catch (Exception ex)
             {
                 tb_statusMessage.Text = $"Error updating results: {ex.Message}";
+            }
+        }
+
+        private async void UpdateChart(BacktestResult result)
+        {
+            try
+            {
+                if (!result.Trades.Any())
+                {
+                    tb_statusMessage.Text = "No trades to display on chart";
+                    return;
+                }
+
+                // Get the most traded symbol for chart display
+                var mostTradedSymbol = result.Trades
+                    .GroupBy(t => t.Symbol)
+                    .OrderByDescending(g => g.Count())
+                    .First().Key;
+
+                tb_statusMessage.Text = $"📊 Loading chart data for {mostTradedSymbol}...";
+
+                // Get price data for the most traded symbol
+                var startDate = result.Trades.Min(t => t.EntryTime).AddDays(-1);
+                var endDate = result.Trades.Max(t => t.ExitTime != default(DateTime) ? t.ExitTime : t.EntryTime).AddDays(1);
+                
+                var priceData = await _dataProvider.GetCandleDataAsync(mostTradedSymbol, startDate, endDate, "H1");
+                
+                if (!priceData.Any())
+                {
+                    tb_statusMessage.Text = $"No price data available for {mostTradedSymbol}";
+                    return;
+                }
+
+                // Create the plot model
+                var plotModel = new PlotModel
+                {
+                    Title = $"{mostTradedSymbol} - Price Chart with Trades",
+                    Background = OxyColors.Transparent,
+                    PlotAreaBorderColor = OxyColors.Gray,
+                    TextColor = OxyColors.White,
+                    TitleColor = OxyColors.White
+                };
+
+                // Add axes
+                var dateAxis = new DateTimeAxis
+                {
+                    Position = AxisPosition.Bottom,
+                    StringFormat = "MM/dd HH:mm",
+                    TextColor = OxyColors.LightGray,
+                    TicklineColor = OxyColors.Gray,
+                    MajorGridlineStyle = LineStyle.Solid,
+                    MajorGridlineColor = OxyColor.FromArgb(30, 255, 255, 255)
+                };
+                plotModel.Axes.Add(dateAxis);
+
+                var priceAxis = new LinearAxis
+                {
+                    Position = AxisPosition.Left,
+                    TextColor = OxyColors.LightGray,
+                    TicklineColor = OxyColors.Gray,
+                    MajorGridlineStyle = LineStyle.Solid,
+                    MajorGridlineColor = OxyColor.FromArgb(30, 255, 255, 255)
+                };
+                plotModel.Axes.Add(priceAxis);
+
+                // Add candlestick series
+                var candleSeries = new CandleStickSeries
+                {
+                    Color = OxyColors.LightGreen,
+                    IncreasingColor = OxyColors.LightGreen,
+                    DecreasingColor = OxyColors.LightCoral,
+                    CandleWidth = 6,
+                    StrokeThickness = 1
+                };
+
+                foreach (var candle in priceData)
+                {
+                    candleSeries.Items.Add(new HighLowItem(
+                        DateTimeAxis.ToDouble(candle.Time),
+                        candle.High,
+                        candle.Low,
+                        candle.Open,
+                        candle.Close
+                    ));
+                }
+                plotModel.Series.Add(candleSeries);
+
+                // Add trade markers
+                var symbolTrades = result.Trades.Where(t => t.Symbol == mostTradedSymbol).ToList();
+                
+                foreach (var trade in symbolTrades)
+                {
+                    // Entry marker
+                    var entryColor = trade.Action == "BUY" ? OxyColors.Green : OxyColors.Red;
+                    var entryMarker = trade.Action == "BUY" ? MarkerType.Triangle : MarkerType.Triangle;
+                    
+                    var entryAnnotation = new PointAnnotation
+                    {
+                        X = DateTimeAxis.ToDouble(trade.EntryTime),
+                        Y = trade.EntryPrice,
+                        Text = $"{trade.Action}\n{trade.EntryPrice:F2}",
+                        TextColor = entryColor,
+                        Fill = entryColor,
+                        Size = 8,
+                        Shape = entryMarker
+                    };
+                    plotModel.Annotations.Add(entryAnnotation);
+
+                    // Exit marker (if trade is closed)
+                    if (trade.ExitTime != default(DateTime) && trade.ExitPrice > 0)
+                    {
+                        var exitColor = trade.IsWin ? OxyColors.LightGreen : OxyColors.LightCoral;
+                        var exitAnnotation = new PointAnnotation
+                        {
+                            X = DateTimeAxis.ToDouble(trade.ExitTime),
+                            Y = trade.ExitPrice,
+                            Text = $"EXIT\n{trade.ExitPrice:F2}\n{trade.ExitReason}",
+                            TextColor = exitColor,
+                            Fill = exitColor,
+                            Size = 6,
+                            Shape = MarkerType.Circle
+                        };
+                        plotModel.Annotations.Add(exitAnnotation);
+
+                        // Draw line connecting entry and exit using ArrowAnnotation
+                        var tradeLine = new ArrowAnnotation
+                        {
+                            StartPoint = new DataPoint(DateTimeAxis.ToDouble(trade.EntryTime), trade.EntryPrice),
+                            EndPoint = new DataPoint(DateTimeAxis.ToDouble(trade.ExitTime), trade.ExitPrice),
+                            Color = trade.IsWin ? OxyColors.LightGreen : OxyColors.LightCoral,
+                            StrokeThickness = 1,
+                            LineStyle = LineStyle.Dash,
+                            HeadLength = 0,
+                            HeadWidth = 0
+                        };
+                        plotModel.Annotations.Add(tradeLine);
+                    }
+                }
+
+                // Update the chart on UI thread
+                await Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    chartView.Model = plotModel;
+                    chartView.IsVisible = true;
+                    sp_chartPlaceholder.IsVisible = false;
+                });
+
+                tb_statusMessage.Text = $"📈 Chart updated: {mostTradedSymbol} with {symbolTrades.Count} trades displayed";
+            }
+            catch (Exception ex)
+            {
+                tb_statusMessage.Text = $"Chart error: {ex.Message}";
             }
         }
 
